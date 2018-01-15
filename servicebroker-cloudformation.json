@@ -1,0 +1,269 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation template for configuring Pivotal Cloud Foundry AWS Service Broker on AWS",
+  "Parameters" : {
+    "EnvironmentID" : {
+      "Type" : "String",
+      "Default" : "pcf-env-id",
+      "Description" : "Default: pcf-env-id"
+    },
+    "RDSDBName" : {
+      "Type": "String",
+      "AllowedPattern": "([a-zA-Z][a-zA-Z0-9]{3,}|^$)",
+      "Description": "RDS database name (leave blank to skip RDS). Nust begin with a letter and contain only alphanumeric characters."
+    },
+    "RDSUsername" : {
+      "Type": "String",
+      "Description": "RDS database username (leave blank to skip RDS)"
+    },
+    "RDSPassword" : {
+      "Type": "String",
+      "NoEcho": "true",
+      "AllowedPattern": "(.{8,}|^$)",
+      "Description": "RDS database password (leave blank to skip RDS, must be 8+ chars)"
+    },
+    "PcfRDSSubnetAZ1" : {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "RDS database Subnet AZ1"
+    },
+    "PcfRDSSubnetAZ2" : {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "RDS database Subnet AZ2"
+    },
+    "PcfRDSSubnetAZ3" : {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "RDS database Subnet AZ3"
+    },
+    "PcfRdsSecurityGroup" : {
+      "Type": "AWS::EC2::SecurityGroup::Id",
+      "Description": "RDS database Security Group"
+    }
+  },
+  "Resources": {
+  "ServiceBrokerIamPolicy" : {
+    "Type": "AWS::IAM::ManagedPolicy",
+    "Properties": {
+      "PolicyDocument" : {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+            "s3:CreateBucket",
+            "s3:DeleteBucket",
+            "s3:PutBucketAcl",
+            "s3:PutBucketLogging",
+            "s3:PutBucketTagging",
+            "s3:GetObject",
+            "s3:ListBucket",
+            "iam:CreateAccessKey",
+            "iam:CreateUser",
+            "iam:GetUser",
+            "iam:DeleteAccessKey",
+            "iam:DeleteUser",
+            "iam:DeleteUserPolicy",
+            "iam:ListAccessKeys",
+            "iam:ListAttachedUserPolicies",
+            "iam:ListUserPolicies",
+            "iam:ListPolicies",
+            "iam:PutUserPolicy",
+            "iam:GetPolicy",
+            "iam:GetAccountAuthorizationDetails",
+            "rds:CreateDBCluster",
+            "rds:CreateDBInstance",
+            "rds:DeleteDBCluster",
+            "rds:DeleteDBInstance",
+            "rds:DescribeDBClusters",
+            "rds:DescribeDBInstances",
+            "rds:DescribeDBSnapshots",
+            "rds:DeleteDBSnapshot",
+            "rds:CreateDBParameterGroup",
+            "rds:ModifyDBParameterGroup",
+            "rds:DeleteDBParameterGroup",
+            "dynamodb:ListTables",
+            "dynamodb:DeleteTable",
+            "dynamodb:DescribeTable",
+            "sqs:CreateQueue",
+            "sqs:DeleteQueue"
+            ],
+            "Resource": [
+              "*"
+            ]
+          }
+        ]
+      },
+      "Description" : {"Fn::Join": [ "", ["Managed policy for AWS Service Broker in ", {"Ref": "AWS::StackName"}]]},
+      "Users" : [ { "Ref" : "ServiceBrokerIamUser" } ]
+     }
+    },
+    "PCFAppDeveloperPolicys3" : {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument" : {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Sid": "allowtagging",
+              "Action": [
+                "s3:GetBucketTagging",
+                "s3:PutBucketTagging"
+              ],
+              "Resource": [
+                "arn:aws:broker:resource::"
+              ]
+            }
+          ]
+        },
+        "Description" : {"Fn::Join": [ "", ["Managed App Developer Policy for AWS Service Broker with s3 in ", {"Ref": "AWS::StackName"}]]},
+        "ManagedPolicyName": "PCFAppDeveloperPolicy-s3"
+       }
+    },
+    "PCFAppDeveloperPolicysqs" : {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument" : {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Sid": "allowtagging",
+              "Action": [
+                "sqs:ListQueues",
+                "sqs:PurgeQueue",
+                "sqs:ReceiveMessage",
+                "sqs:SendMessage"
+              ],
+              "Resource": [
+                "arn:aws:broker:resource::"
+              ]
+            }
+          ]
+        },
+        "Description" : {"Fn::Join": [ "", ["Managed App Developer Policy for AWS Service Broker with sqs in ", {"Ref": "AWS::StackName"}]]},
+        "ManagedPolicyName": "PCFAppDeveloperPolicy-sqs"
+       }
+    },
+    "PCFAppDeveloperPolicydynamodb" : {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument" : {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Sid": "allowtagging",
+              "Action": [
+                "dynamodb:*"
+              ],
+              "Resource": [
+                "arn:aws:broker:resource::"
+              ]
+            }
+          ]
+        },
+        "Description" : {"Fn::Join": [ "", ["Managed App Developer Policy for AWS Service Broker with dynamodb in ", {"Ref": "AWS::StackName"}]]},
+        "ManagedPolicyName": "PCFAppDeveloperPolicy-dynamodb"
+       }
+    },
+    "PCFAppDeveloperPolicyrds" : {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument" : {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Sid": "allowtagging",
+              "Action": [
+                "rds:ListTagsForResource",
+                "rds:DescribeDbInstances"
+              ],
+              "Resource": [
+                "arn:aws:broker:resource::"
+              ]
+            }
+          ]
+        },
+        "Description" : {"Fn::Join": [ "", ["Managed App Developer Policy for AWS Service Broker with rds in ", {"Ref": "AWS::StackName"}]]},
+        "ManagedPolicyName": "PCFAppDeveloperPolicy-rds"
+       }
+    },
+    "ServiceBrokerIamUser": {
+      "Type": "AWS::IAM::User",
+      "Properties": {
+        "Policies": []
+      }
+    },
+    "ServiceBrokerIamUserSecretAccessKey": {
+      "Type": "AWS::IAM::AccessKey",
+      "DependsOn": "ServiceBrokerIamUser",
+      "Properties": {
+        "UserName": {"Ref": "ServiceBrokerIamUser"}
+      }
+    },
+    "PcfRdsSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Service Broker RDS Subnet Group",
+        "SubnetIds": [
+          {
+            "Ref": "PcfRDSSubnetAZ1"
+          },
+          {
+            "Ref": "PcfRDSSubnetAZ2"
+          },
+          {
+            "Ref": "PcfRDSSubnetAZ3"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {"Fn::Join": ["",[ { "Ref": "EnvironmentID" }, "-rds-subnet-group" ] ] }
+          }
+        ]
+      }
+    },
+    "PcfRds": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "5",
+        "StorageType": "gp2",
+        "DBInstanceClass": "db.t2.micro",
+        "DBInstanceIdentifier": {"Fn::Join": ["",[ { "Ref": "EnvironmentID" }, "-sb-rds" ] ] },
+        "Engine": "MySQL",
+        "MultiAZ": "True",
+        "DBName": {"Ref": "RDSDBName"},
+        "MasterUsername": {"Ref": "RDSUsername"},
+        "MasterUserPassword": {"Ref": "RDSPassword"},
+        "PubliclyAccessible": "False",
+        "VPCSecurityGroups": [{"Ref": "PcfRdsSecurityGroup"}],
+        "DBSubnetGroupName": {"Ref": "PcfRdsSubnetGroup"}
+      }
+    }
+  },
+  "Outputs": {
+    "ServiceBrokerIamUserAccessKey": {
+      "Value": {"Ref": "ServiceBrokerIamUser"}
+    },
+    "ServiceBrokerIamUserSecretAccessKey": {
+      "Value": { "Fn::GetAtt": [ "ServiceBrokerIamUserSecretAccessKey", "SecretAccessKey"]}
+    },
+    "PcfRdsAddress": {
+      "Value": { "Fn::GetAtt": [ "PcfRds", "Endpoint.Address"]}
+    },
+    "PcfRdsPort": {
+      "Value": {"Fn::GetAtt": [ "PcfRds", "Endpoint.Port"] }
+    },
+    "PcfRdsUsername": {
+      "Value": {"Ref": "RDSUsername"}
+    },
+    "PcfRdsPassword": {
+      "Value": {"Ref": "RDSPassword"}
+    },
+    "PcfRdsDBName": {
+      "Value": {"Ref": "RDSDBName"}
+    }
+  }
+}
