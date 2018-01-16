@@ -49,19 +49,19 @@
       "Description" : "Default: pcf-env-id"
     },
     "AvailabilityZone1" : {
-      "Type" : "String",
+      "Type" : "AWS::EC2::AvailabilityZone::Name",
       "Description" : "Example: us-west-2a"
     },
     "AvailabilityZone2" : {
-      "Type" : "String",
+      "Type" : "AWS::EC2::AvailabilityZone::Name",
       "Description" : "Example: us-west-2b"
     },
     "AvailabilityZone3" : {
-      "Type" : "String",
+      "Type" : "AWS::EC2::AvailabilityZone::Name",
       "Description" : "Example: us-west-2c"
     },
     "OpsManAMI" : {
-      "Type": "String",
+      "Type": "AWS::EC2::Image::Id",
       "Description": "Exampe: ami-6e799016"
     },
     "OpsManIngressCidr" : {

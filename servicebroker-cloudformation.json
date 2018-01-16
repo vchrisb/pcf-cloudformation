@@ -244,25 +244,28 @@
     }
   },
   "Outputs": {
-    "ServiceBrokerIamUserAccessKeyId": {
+    "AccessKeyID": {
       "Value": {"Ref": "ServiceBrokerIamUserSecretAccessKey"}
     },
-    "ServiceBrokerIamUserSecretAccessKey": {
+    "SecretAccessKey": {
       "Value": { "Fn::GetAtt": [ "ServiceBrokerIamUserSecretAccessKey", "SecretAccessKey"]}
     },
-    "PcfRdsAddress": {
+    "BrokerIAMPolicyArn": {
+      "Value": {"Ref": "ServiceBrokerIamPolicy"}
+    },
+    "DatabaseHost": {
       "Value": { "Fn::GetAtt": [ "PcfRds", "Endpoint.Address"]}
     },
-    "PcfRdsPort": {
+    "DatabasePort": {
       "Value": {"Fn::GetAtt": [ "PcfRds", "Endpoint.Port"] }
     },
-    "PcfRdsUsername": {
+    "DatabaseUsername": {
       "Value": {"Ref": "RDSUsername"}
     },
-    "PcfRdsPassword": {
+    "DatabasePassword": {
       "Value": {"Ref": "RDSPassword"}
     },
-    "PcfRdsDBName": {
+    "DatabaseName": {
       "Value": {"Ref": "RDSDBName"}
     }
   }
