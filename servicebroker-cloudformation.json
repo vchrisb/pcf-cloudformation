@@ -244,8 +244,8 @@
     }
   },
   "Outputs": {
-    "ServiceBrokerIamUserAccessKey": {
-      "Value": {"Ref": "ServiceBrokerIamUser"}
+    "ServiceBrokerIamUserAccessKeyId": {
+      "Value": {"Ref": "ServiceBrokerIamUserSecretAccessKey"}
     },
     "ServiceBrokerIamUserSecretAccessKey": {
       "Value": { "Fn::GetAtt": [ "ServiceBrokerIamUserSecretAccessKey", "SecretAccessKey"]}
